@@ -9,7 +9,7 @@
 
 @interface MNPushbackStream : NSStream
 {
-    id<NSStreamDelegate> _delegate;
+    __weak id<NSStreamDelegate> _delegate;
 }
 
 + (instancetype)pushbackStreamWithData:(NSData *)data;
