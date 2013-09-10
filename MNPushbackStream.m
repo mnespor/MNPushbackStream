@@ -52,6 +52,7 @@
     if (self)
     {
         self->_impl = [[NSInputStream alloc] initWithData:data];
+        self->_impl.delegate = self;
         self->_runLoops = [[NSMutableArray alloc] init];
         self->_modes = [[NSMutableArray alloc] init];
     }
@@ -65,6 +66,7 @@
     if (self)
     {
         self->_impl = [[NSInputStream alloc] initWithFileAtPath:path];
+        self->_impl.delegate = self;
         self->_runLoops = [[NSMutableArray alloc] init];
         self->_modes = [[NSMutableArray alloc] init];
     }
@@ -78,6 +80,7 @@
     if (self)
     {
         self->_impl = [[NSInputStream alloc] initWithURL:url];
+        self->_impl.delegate = self;
         self->_runLoops = [[NSMutableArray alloc] init];
         self->_modes = [[NSMutableArray alloc] init];
     }
