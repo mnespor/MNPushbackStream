@@ -52,7 +52,6 @@
     if (self)
     {
         self->_impl = [[NSInputStream alloc] initWithData:data];
-        self->_impl.delegate = self;
         self->_runLoops = [[NSMutableArray alloc] init];
         self->_modes = [[NSMutableArray alloc] init];
     }
@@ -66,7 +65,6 @@
     if (self)
     {
         self->_impl = [[NSInputStream alloc] initWithFileAtPath:path];
-        self->_impl.delegate = self;
         self->_runLoops = [[NSMutableArray alloc] init];
         self->_modes = [[NSMutableArray alloc] init];
     }
@@ -80,7 +78,6 @@
     if (self)
     {
         self->_impl = [[NSInputStream alloc] initWithURL:url];
-        self->_impl.delegate = self;
         self->_runLoops = [[NSMutableArray alloc] init];
         self->_modes = [[NSMutableArray alloc] init];
     }
@@ -101,6 +98,7 @@
         self.pushedBytes = [unreadData mutableCopy];
     
     self.pushedReader = [NSInputStream inputStreamWithData:self.pushedBytes];
+    self.pushedReader.delegate = self.delegate;
 }
 
 - (void)unreadString:(NSString *)str encoding:(NSStringEncoding)encoding
@@ -144,9 +142,20 @@
     return self->_delegate;
 }
 
-- (void)setDelegate:(id<NSStreamDelegate>)delegate
+- (void)setDelegate:(id<NSStreamDelegate>)aDelegate
 {
-    self->_delegate = delegate;
+    self->_delegate = aDelegate;
+    
+    if (aDelegate)
+    {
+        self.impl.delegate = self;
+        self.pushedReader.delegate = self;
+    }
+    else
+    {
+        self.impl.delegate = nil;
+        self.pushedReader.delegate = nil;
+    }
 }
 
 #pragma mark - Stuff that looks like NSInputStream
@@ -155,7 +164,7 @@
 {
     if (!self.pushedBytes || ![self.pushedReader hasBytesAvailable]) // Nothing has been pushed back
         return [self.impl read:buffer maxLength:len];
-
+    
     assert(self.isOpen && "tried to read from a closed stream");
     
     uint8_t* pushedbuf = malloc(len * sizeof(uint8_t));
@@ -236,13 +245,14 @@
         return;
     
     self.pushedReader = nil;
-
+    
     if (len >= self.pushedBytes.length)
         self.pushedBytes = nil;
     else
     {
         self.pushedBytes = [[NSData dataWithBytes:(self.pushedBytes.bytes + len) length:(self.pushedBytes.length - len)] mutableCopy];
         self.pushedReader = [NSInputStream inputStreamWithData:self.pushedBytes];
+        self.pushedReader.delegate = self.delegate;
     }
 }
 
