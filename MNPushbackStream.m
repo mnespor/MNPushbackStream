@@ -55,7 +55,7 @@
         self->_runLoops = [[NSMutableArray alloc] init];
         self->_modes = [[NSMutableArray alloc] init];
     }
-    
+
     return self;
 }
 
@@ -68,7 +68,7 @@
         self->_runLoops = [[NSMutableArray alloc] init];
         self->_modes = [[NSMutableArray alloc] init];
     }
-    
+
     return self;
 }
 
@@ -81,7 +81,7 @@
         self->_runLoops = [[NSMutableArray alloc] init];
         self->_modes = [[NSMutableArray alloc] init];
     }
-    
+
     return self;
 }
 
@@ -91,12 +91,12 @@
 {
     self.pushedReader = nil;
     NSData* unreadData = [NSData dataWithBytes:(bytes + offset) length:len];
-    
+
     if (self.pushedBytes)
         [self.pushedBytes appendData:unreadData];
     else
         self.pushedBytes = [unreadData mutableCopy];
-    
+
     self.pushedReader = [NSInputStream inputStreamWithData:self.pushedBytes];
     self.pushedReader.delegate = self.delegate;
 }
@@ -145,7 +145,7 @@
 - (void)setDelegate:(id<NSStreamDelegate>)aDelegate
 {
     self->_delegate = aDelegate;
-    
+
     if (aDelegate)
     {
         self.impl.delegate = self;
@@ -164,12 +164,12 @@
 {
     if (!self.pushedBytes || ![self.pushedReader hasBytesAvailable]) // Nothing has been pushed back
         return [self.impl read:buffer maxLength:len];
-    
+
     assert(self.isOpen && "tried to read from a closed stream");
-    
+
     uint8_t* pushedbuf = malloc(len * sizeof(uint8_t));
     NSInteger pushedReadResult = [self.pushedReader read:pushedbuf maxLength:len];
-    
+
     if (pushedReadResult < 0)
     {
         NSLog(@"%@:read:maxLength: Failed to read pushed bytes", self);
@@ -189,11 +189,11 @@
                                                            length:pushedReadResult * sizeof(uint8_t)] mutableCopy];
         free(pushedbuf);
         [self pop:pushedReadResult];
-        
+
         NSUInteger remainderLen = len - pushedReadResult;
         uint8_t* remainderbuf = malloc(remainderLen * sizeof(uint8_t));
         NSInteger remainderReadResult = [self.impl read:remainderbuf maxLength:remainderLen];
-        
+
         if (remainderReadResult < 0)
         {
             NSLog(@"%@:read:maxLength: Failed to read non-pushed bytes", self);
@@ -206,7 +206,7 @@
                                                          length:remainderLen * sizeof(uint8_t)]];
             free(remainderbuf);
             memcpy(buffer, aggregateReadData.bytes, len * sizeof(uint8_t));
-            return remainderReadResult;
+            return (remainderReadResult + pushedReadResult);
         }
         else // (remainderReadResult > 0), so pushed bytes + unread bytes < len
         {
@@ -243,9 +243,9 @@
 {
     if (!self.pushedBytes)
         return;
-    
+
     self.pushedReader = nil;
-    
+
     if (len >= self.pushedBytes.length)
         self.pushedBytes = nil;
     else
