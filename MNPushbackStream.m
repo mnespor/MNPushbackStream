@@ -90,12 +90,15 @@
 - (void)unread:(const void *)bytes offset:(NSUInteger)offset length:(NSUInteger)len
 {
     self.pushedReader = nil;
-    NSData* unreadData = [NSData dataWithBytes:(bytes + offset) length:len];
+    NSData* unreadData = [[NSData dataWithBytes:(bytes + offset) length:len] mutableCopy];
 
     if (self.pushedBytes)
-        [self.pushedBytes appendData:unreadData];
+    {
+        [unreadData appendData:self.pushedBytes];
+        self.pushedBytes = unreadData;
+    }
     else
-        self.pushedBytes = [unreadData mutableCopy];
+        self.pushedBytes = unreadData;
 
     self.pushedReader = [NSInputStream inputStreamWithData:self.pushedBytes];
     self.pushedReader.delegate = self.delegate;
