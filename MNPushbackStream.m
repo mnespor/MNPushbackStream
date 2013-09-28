@@ -176,14 +176,14 @@
         free(pushedbuf);
         return pushedReadResult;
     }
-    else if (pushedReadResult == 0 || ![self.impl hasBytesAvailable]) // pushed bytes > len OR can't read from super
+    else if (pushedReadResult == len || ![self.impl hasBytesAvailable]) // pushed bytes > len OR can't read from super
     {
         memcpy(buffer, pushedbuf, len * sizeof(uint8_t));
         free(pushedbuf);
         [self pop:(pushedReadResult > 0 ? pushedReadResult : len)];
         return pushedReadResult;
     }
-    else // (pushedReadResult > 0), so read all pushed bytes AND super has bytes available; start reading from super
+    else // (0 <= pushedReadResult < len), so we just read all pushed bytes AND super has bytes available; start reading from super
     {
         NSMutableData* aggregateReadData = [[NSData dataWithBytes:pushedbuf
                                                            length:pushedReadResult * sizeof(uint8_t)] mutableCopy];
@@ -200,7 +200,7 @@
             free(remainderbuf);
             return remainderReadResult;
         }
-        else if (remainderReadResult == 0) // Pushed bytes <= len, but unread bytes + pushed bytes > len
+        else if ((remainderReadResult + pushedReadResult) == len) // Pushed bytes <= len, but unread bytes + pushed bytes > len
         {
             [aggregateReadData appendData:[NSData dataWithBytes:remainderbuf
                                                          length:remainderLen * sizeof(uint8_t)]];
