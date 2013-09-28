@@ -90,7 +90,7 @@
 - (void)unread:(const void *)bytes offset:(NSUInteger)offset length:(NSUInteger)len
 {
     self.pushedReader = nil;
-    NSData* unreadData = [[NSData dataWithBytes:(bytes + offset) length:len] mutableCopy];
+    NSMutableData* unreadData = [[NSData dataWithBytes:(bytes + offset) length:len] mutableCopy];
 
     if (self.pushedBytes)
     {
